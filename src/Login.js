@@ -9,8 +9,13 @@ function Login() {
   const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
 
   return (
-    <div>
-      <a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state`}>Login to Spotify</a>
+    <div className="container mt-4 text-center">
+      <a 
+        className="btn btn-primary"
+        href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=${RESPONSE_TYPE}&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state`}
+      >
+        Login to Spotify
+      </a>
     </div>
   );
 }
