@@ -25,7 +25,7 @@ Spotistics is a modern React application that allows users to analyze their Spot
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/spotistics.git
+    git clone https://github.com/bbinxx/spotistics.git
     cd spotistics
     ```
 
