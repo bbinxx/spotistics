@@ -6,6 +6,7 @@ import UserInfo from './UserInfo';
 import Login from './Login';
 import Home from './Home';
 import { exchangeToken } from './spotifyAuth';
+import './Login.css'; // Import styles for the loading screen
 
 function App() {
   const [token, setToken] = useState('');
@@ -69,6 +70,7 @@ function App() {
           window.history.replaceState({}, document.title, window.location.pathname);
         } catch (err) {
           console.error('Token Exchange Failed:', err);
+          // Optional: Show error to user or redirect to login with error param
         }
       } else {
         setToken(storedToken);
@@ -80,7 +82,22 @@ function App() {
   }, [logout]);
 
   if (isLoading) {
-    return <div className="text-center mt-5"><div className="spinner-border text-success" role="status"></div></div>;
+    return (
+      <div className="login-container">
+        <div className="login-bg-overlay"></div>
+        <div className="bg-orb orb-1"></div>
+        <div className="bg-orb orb-2"></div>
+        <div className="d-flex flex-column align-items-center justify-content-center" style={{ height: '100%', zIndex: 2 }}>
+          <h1 className="app-title mb-4" style={{ fontSize: '2rem' }}>Spotistics</h1>
+          <div className="loading-dots">
+            <div className="dot"></div>
+            <div className="dot"></div>
+            <div className="dot"></div>
+          </div>
+          <p className="text-white-50 mt-3 small">Authenticating...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

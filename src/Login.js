@@ -1,71 +1,95 @@
 //Login.js
 import React, { useEffect, useState } from 'react';
 import { generateCodeVerifier, generateCodeChallenge } from './spotifyAuth';
+import './Login.css';
 
 const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
-const RESPONSE_TYPE = 'code'; // Changed from 'token' to 'code' for PKCE
+const RESPONSE_TYPE = 'code';
 
 function Login() {
   const CLIENT_ID = (process.env.REACT_APP_CLIENT_ID || '').trim();
   const REDIRECT_URI = (process.env.REACT_APP_REDIRECT_URI || '').trim();
   const [loginUrl, setLoginUrl] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const setupLogin = async () => {
-      if (!CLIENT_ID || !REDIRECT_URI) return;
+      // Basic validation
+      if (!CLIENT_ID || !REDIRECT_URI) {
+        setError('Missing configuration. Please check your environment variables.');
+        console.error('Missing Env Vars', { CLIENT_ID, REDIRECT_URI });
+        return;
+      }
 
-      const verifier = generateCodeVerifier(128);
-      const challenge = await generateCodeChallenge(verifier);
+      try {
+        const verifier = generateCodeVerifier(128);
+        const challenge = await generateCodeChallenge(verifier);
 
-      // Store verifier in local storage for the callback
-      window.localStorage.setItem('code_verifier', verifier);
+        // Store verifier for the callback
+        window.localStorage.setItem('code_verifier', verifier);
 
-      const url = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=${RESPONSE_TYPE}&code_challenge_method=S256&code_challenge=${challenge}&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state`;
+        const scope = [
+          'streaming',
+          'user-read-email',
+          'user-read-private',
+          'user-library-read',
+          'user-library-modify',
+          'user-read-playback-state',
+          'user-modify-playback-state'
+        ].join(' ');
 
-      setLoginUrl(url);
-      console.log('Generated Login URL (PKCE):', url);
+        const searchParams = new URLSearchParams({
+          client_id: CLIENT_ID,
+          response_type: RESPONSE_TYPE,
+          redirect_uri: REDIRECT_URI,
+          code_challenge_method: 'S256',
+          code_challenge: challenge,
+          scope: scope
+        });
+
+        // URLSearchParams encodes spaces as '+', but Spotify strictly expects space-separated or %20.
+        // We can rely on toString() but verify if it works. Standard OAuth allows +.
+        // However, to be extra safe and mimic previous behavior:
+        setLoginUrl(`${AUTH_ENDPOINT}?${searchParams.toString()}`);
+
+      } catch (err) {
+        console.error('Error in login setup:', err);
+        setError('Could not initialize login security. Please refresh.');
+      }
     };
 
     setupLogin();
   }, [CLIENT_ID, REDIRECT_URI]);
 
-  if (!CLIENT_ID || !REDIRECT_URI) {
-    const errorMsg = 'Missing Environment Variables: CLIENT_ID or REDIRECT_URI';
-    console.error(errorMsg, { CLIENT_ID, REDIRECT_URI });
-    return (
-      <div className="container mt-4 text-center">
-        <div className="alert alert-danger">
-          Configuration Error: {errorMsg}. Check your .env file.
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mt-4 text-center">
-      {loginUrl ? (
-        <a
-          className="btn btn-primary"
-          href={loginUrl}
-        >
-          Login to Spotify
-        </a>
-      ) : (
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      )}
+    <div className="login-container">
+      <div className="login-bg-overlay"></div>
+      <div className="bg-orb orb-1"></div>
+      <div className="bg-orb orb-2"></div>
 
-      <div className="mt-3 text-muted small">
-        <p>Redirecting to: <code>{REDIRECT_URI}</code></p>
-        <div className="alert alert-info d-inline-block text-start">
-          <strong>Setup Required (PKCE):</strong>
-          <ul className="mb-0">
-            <li>Go to your Spotify Developer Dashboard</li>
-            <li>Ensure Redirect URI is exactly: <code>{REDIRECT_URI}</code></li>
-            <li>Note: This app now uses Authorization Code Flow (PKCE)</li>
-          </ul>
+      <div className="login-card">
+        <div className="app-brand">
+          <h1 className="app-title">Spotistics</h1>
+          <p className="app-subtitle">Unlock your music insights</p>
         </div>
+
+        {error ? (
+          <div className="error-banner">
+            {error}
+          </div>
+        ) : !loginUrl ? (
+          <div className="loading-container">
+            <div className="loading-dots">
+              <div className="dot"></div>
+              <div className="dot"></div>
+              <div className="dot"></div>
+            </div>
+          </div>
+        ) : (
+          <a className="login-btn" href={loginUrl}>
+            Login to Spotify
+          </a>
+        )}
       </div>
     </div>
   );
